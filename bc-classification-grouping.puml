@@ -1,0 +1,39 @@
+@startuml bc-classification-grouping
+' Equivalent of the Mermaid erDiagram in bc-classification-grouping.md
+' Crow's-foot / Information Engineering notation:
+'   ||  = exactly one   |   o{ = zero or many
+' PK / FK preserved as stereotypes (1:1 with Mermaid PK/FK markers).
+
+entity BIOMEDICAL_CONCEPT {
+  bc_id : string <<PK>>
+  short_name : string
+  ncit_code : string
+}
+
+entity BC_CLASSIFICATION_SCHEME {
+  scheme_id : string <<PK>>
+  name : string
+  description : string
+  purpose : string
+  intended_use : string
+}
+
+entity BC_CLASSIFICATION_VALUE {
+  value_id : string <<PK>>
+  label : string
+  description : string
+}
+
+entity BC_CLASSIFICATION_ASSIGNMENT {
+  assignment_id : string <<PK>>
+  bc_id : string <<FK>>
+  scheme_id : string <<FK>>
+  value_id : string <<FK>>
+}
+
+BIOMEDICAL_CONCEPT       ||--o{ BC_CLASSIFICATION_ASSIGNMENT : "is classified by"
+BC_CLASSIFICATION_SCHEME ||--o{ BC_CLASSIFICATION_VALUE      : "defines allowed values"
+BC_CLASSIFICATION_SCHEME ||--o{ BC_CLASSIFICATION_ASSIGNMENT : "scopes assignment"
+BC_CLASSIFICATION_VALUE  ||--o{ BC_CLASSIFICATION_ASSIGNMENT : "is assigned to BC"
+
+@enduml
