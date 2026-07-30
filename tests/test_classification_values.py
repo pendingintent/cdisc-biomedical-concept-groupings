@@ -3,7 +3,9 @@ KNOWN_SCHEME_ID = "collection_method"
 
 
 def test_list_values_filter_by_scheme(client):
-    resp = client.get("/classification-values", params={"scheme_id": "qrs_age_category"})
+    resp = client.get(
+        "/classification-values", params={"scheme_id": "qrs_age_category"}
+    )
     assert resp.status_code == 200
     body = resp.json()
     assert body["total"] == 3
@@ -32,7 +34,12 @@ def test_value_biomedical_concepts(client):
 def test_create_value_with_bad_scheme_conflicts(client):
     resp = client.post(
         "/classification-values",
-        json={"value_id": "test_value", "scheme_id": "does_not_exist", "label": "Test", "description": "Test"},
+        json={
+            "value_id": "test_value",
+            "scheme_id": "does_not_exist",
+            "label": "Test",
+            "description": "Test",
+        },
     )
     assert resp.status_code == 409
 
@@ -50,8 +57,12 @@ def test_create_update_delete_value_round_trip(client):
     assert create_resp.status_code == 201
 
     update_resp = client.put(
-        f"/classification-values/test_value",
-        json={"scheme_id": KNOWN_SCHEME_ID, "label": "Test Value Updated", "description": "Updated"},
+        "/classification-values/test_value",
+        json={
+            "scheme_id": KNOWN_SCHEME_ID,
+            "label": "Test Value Updated",
+            "description": "Updated",
+        },
     )
     assert update_resp.status_code == 200
     assert update_resp.json()["label"] == "Test Value Updated"

@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BC Grouping Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  /* ── CDISC Design System Tokens ── */
+  :root {
+    /* Brand core */
+    --cdisc-blue: #134678;
+    --cdisc-blue-700: #0f3a63;
+    --cdisc-blue-300: #5d83a8;
+    --cdisc-navy: #0E2841;
+    --cdisc-red: #C94543;
+    --cdisc-gold: #EBA91E;
+    --cdisc-teal: #9DD0CA;
+    --cdisc-sky: #3DB3E3;
+    --cdisc-purple: #533278;
+    --cdisc-green: #286040;
+    --cdisc-orange: #D57E00;
+    --cdisc-amber: #EDAA00;
+
+    /* Neutrals */
+    --white: #FFFFFF;
+    --gray-50: #F5F5F5;
+    --gray-100: #E8E8E8;
+    --gray-200: #D9DCDF;
+    --gray-300: #BFC6CD;
+    --gray-400: #9AA3AD;
+    --gray-500: #6E7882;
+    --gray-600: #4C555E;
+    --gray-700: #323A42;
+
+    /* Semantic text */
+    --text-strong: var(--cdisc-navy);
+    --text-body: #2A333B;
+    --text-muted: var(--gray-500);
+    --text-on-dark: var(--white);
+    --text-on-dark-muted: #B9C6D4;
+
+    /* Surfaces */
+    --surface-page: var(--white);
+    --surface-subtle: var(--gray-50);
+    --surface-card: var(--white);
+
+    /* Borders */
+    --border-subtle: var(--gray-100);
+    --border-default: var(--gray-200);
+    --border-strong: var(--gray-300);
+
+    /* Actions */
+    --action-bg: var(--cdisc-blue);
+    --action-bg-hover: var(--cdisc-blue-700);
+    --action-bg-active: #0c3157;
+    --action-fg: var(--white);
+
+    /* Status */
+    --status-error: var(--cdisc-red);
+    --status-info: var(--cdisc-sky);
+
+    /* Typography */
+    --font-sans: 'Azo Sans', 'Plus Jakarta Sans', Arial, 'Helvetica Neue', sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --fw-light: 300;
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-bold: 700;
+    --fs-h3: 23px;
+    --fs-h4: 19px;
+    --fs-body: 16px;
+    --fs-sm: 14px;
+    --fs-xs: 12px;
+    --fs-overline: 12px;
+    --lh-tight: 1.1;
+    --lh-snug: 1.25;
+    --lh-normal: 1.5;
+    --lh-relaxed: 1.65;
+    --ls-tight: -0.02em;
+    --ls-snug: -0.01em;
+    --ls-overline: 0.14em;
+
+    /* Spacing (8px base) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+
+    /* Radii */
+    --radius-xs: 2px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 10px;
+    --radius-xl: 16px;
+    --radius-pill: 999px;
+
+    /* Borders */
+    --accent-bar: 4px;
+
+    /* Shadows */
+    --shadow-xs: 0 1px 2px rgba(14, 40, 65, 0.06);
+    --shadow-sm: 0 1px 3px rgba(14, 40, 65, 0.08), 0 1px 2px rgba(14, 40, 65, 0.06);
+    --shadow-md: 0 4px 12px rgba(14, 40, 65, 0.10);
+    --shadow-lg: 0 12px 28px rgba(14, 40, 65, 0.14);
+    --shadow-focus: 0 0 0 3px rgba(61, 179, 227, 0.40);
+
+    /* Motion */
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-fast: 120ms;
+    --dur-base: 200ms;
+    --dur-slow: 320ms;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--surface-subtle);
+    color: var(--text-body);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ── Top bar ── */
+  header {
+    background: var(--cdisc-navy);
+    color: var(--white);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  /* Four-dot CDISC brand motif */
+  .header-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .header-dots span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: block;
+  }
+  .header-dots span:nth-child(1) { background: var(--cdisc-red); }
+  .header-dots span:nth-child(2) { background: var(--cdisc-gold); }
+  .header-dots span:nth-child(3) { background: var(--cdisc-teal); }
+  .header-dots span:nth-child(4) { background: var(--cdisc-sky); }
+
+  .header-divider {
+    width: 1px;
+    height: 26px;
+    background: rgba(255,255,255,0.14);
+    flex-shrink: 0;
+  }
+
+  .header-wordmark {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .header-eyebrow {
+    font-size: 10px;
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--ls-overline);
+    text-transform: uppercase;
+    color: var(--text-on-dark-muted);
+    line-height: 1;
+  }
+  .header-title {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--ls-snug);
+    color: var(--white);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .header-search {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+  }
+  .header-search input {
+    width: 100%;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-md);
+    padding: 7px 110px 7px 34px;
+    color: var(--white);
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    outline: none;
+    transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+  }
+  .header-search input::placeholder { color: rgba(255,255,255,0.36); }
+  .header-search input:focus {
+    background: rgba(255,255,255,0.13);
+    border-color: var(--cdisc-sky);
+    box-shadow: 0 0 0 2px rgba(61, 179, 227, 0.22);
+  }
+  .header-search svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.36;
+  }
+
+  .search-count {
+    color: var(--text-on-dark-muted);
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Pill-style tab switcher on dark */
+  .view-tabs {
+    display: flex;
+    gap: 1px;
+    background: rgba(255,255,255,0.07);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    flex-shrink: 0;
+  }
+  .view-tab {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.52);
+    padding: 5px 14px;
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    border-radius: calc(var(--radius-md) - 1px);
+    transition: color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+  .view-tab:hover { color: rgba(255,255,255,0.82); background: rgba(255,255,255,0.09); }
+  .view-tab.active {
+    color: var(--white);
+    background: var(--cdisc-blue);
+    font-weight: var(--fw-bold);
+  }
+
+  .search-clear-btn {
+    position: absolute;
+    right: 88px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.38);
+    cursor: pointer;
+    padding: 1px 5px;
+    font-size: 13px;
+    line-height: 1.4;
+    border-radius: var(--radius-sm);
+    transition: color var(--dur-fast) var(--ease-standard),
+                background var(--dur-fast) var(--ease-standard);
+  }
+  .search-clear-btn:hover {
+    color: rgba(255,255,255,0.80);
+    background: rgba(255,255,255,0.10);
+  }
+
+  .search-scope-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: rgba(255,255,255,0.52);
+    padding: 2px 8px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+    line-height: 1.5;
+    transition: background var(--dur-fast) var(--ease-standard),
+                color var(--dur-fast) var(--ease-standard),
+                border-color var(--dur-fast) var(--ease-standard);
+  }
+  .search-scope-btn:hover {
+    background: rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.82);
+    border-color: rgba(255,255,255,0.28);
+  }
+  .search-scope-btn.on {
+    background: rgba(235,169,30,0.18);
+    border-color: rgba(235,169,30,0.60);
+    color: var(--cdisc-amber);
+  }
+
+  .import-btn {
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.20);
+    color: rgba(255,255,255,0.72);
+    padding: 6px 14px;
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .import-btn:hover {
+    background: rgba(255,255,255,0.10);
+    color: var(--white);
+    border-color: rgba(255,255,255,0.32);
+  }
+
+  /* ── Prototype disclaimer banner ── */
+  .prototype-banner {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding: 8px var(--space-5);
+    background: rgba(235, 169, 30, 0.12);
+    border-bottom: 1px solid rgba(235, 169, 30, 0.35);
+    flex-shrink: 0;
+  }
+  .prototype-banner-label {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    color: #8a6200;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .prototype-banner-text {
+    font-size: var(--fs-xs);
+    color: var(--text-body);
+    line-height: var(--lh-normal);
+  }
+
+  /* ── Main layout ── */
+  .app-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Facet sidebar ── */
+  .sidebar {
+    width: 272px;
+    min-width: 272px;
+    background: var(--white);
+    border-right: 1px solid var(--border-default);
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: var(--radius-pill); }
+
+  .facet-group { border-bottom: 1px solid var(--border-subtle); }
+
+  .facet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--dur-fast) var(--ease-standard);
+  }
+  .facet-header:hover { background: var(--surface-subtle); }
+  .facet-header h3 {
+    font-size: var(--fs-overline);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: var(--ls-overline);
+    color: var(--cdisc-blue);
+  }
+  .facet-header .chevron {
+    transition: transform var(--dur-base) var(--ease-standard);
+    color: var(--text-muted);
+  }
+  .facet-header.collapsed .chevron { transform: rotate(-90deg); }
+
+  .facet-list {
+    padding: 2px 8px 10px;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+  .facet-list.collapsed { max-height: 0 !important; padding: 0 8px; }
+
+  .facet-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 5px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-standard);
+    font-size: var(--fs-xs);
+  }
+  .facet-item:hover { background: var(--surface-subtle); }
+  .facet-item.active {
+    background: rgba(19,70,120,0.08);
+    color: var(--cdisc-blue);
+    font-weight: var(--fw-medium);
+  }
+  .facet-item.active .facet-count { background: var(--cdisc-blue); color: var(--white); }
+
+  .facet-check {
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius-xs);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--dur-fast) var(--ease-standard);
+  }
+  .facet-item.active .facet-check { background: var(--cdisc-blue); border-color: var(--cdisc-blue); }
+  .facet-item.active .facet-check::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--white);
+    border-radius: 1px;
+  }
+
+  .facet-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .facet-count {
+    font-size: 11px;
+    background: var(--gray-100);
+    color: var(--text-muted);
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    font-weight: var(--fw-bold);
+    min-width: 22px;
+    text-align: center;
+    transition: all var(--dur-fast) var(--ease-standard);
+  }
+  .facet-count.zero { opacity: 0.35; }
+
+  .clear-filters {
+    display: none;
+    margin: 10px 12px;
+    padding: 7px 14px;
+    background: var(--cdisc-red);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    width: calc(100% - 24px);
+    transition: background var(--dur-fast) var(--ease-standard);
+  }
+  .clear-filters.visible { display: block; }
+  .clear-filters:hover { background: #b43b39; }
+
+  .sidebar-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px 5px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .show-zeros-btn {
+    background: rgba(213, 126, 0, 0.09);
+    border: 1px solid rgba(213, 126, 0, 0.28);
+    color: var(--cdisc-orange);
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    font-weight: var(--fw-medium);
+    letter-spacing: 0.01em;
+    transition: background var(--dur-fast) var(--ease-standard),
+                color var(--dur-fast) var(--ease-standard),
+                border-color var(--dur-fast) var(--ease-standard);
+  }
+  .show-zeros-btn:not(:disabled):hover {
+    background: rgba(213, 126, 0, 0.18);
+    border-color: rgba(213, 126, 0, 0.50);
+  }
+  .show-zeros-btn:disabled {
+    opacity: 0.28;
+    cursor: default;
+    background: none;
+    border-color: transparent;
+    color: var(--text-muted);
+  }
+  .show-zeros-btn.on {
+    background: rgba(19, 70, 120, 0.09);
+    border-color: rgba(19, 70, 120, 0.28);
+    color: var(--cdisc-blue);
+  }
+  .show-zeros-btn.on:not(:disabled):hover {
+    background: rgba(19, 70, 120, 0.16);
+    border-color: rgba(19, 70, 120, 0.45);
+  }
+  .expand-all-btn {
+    background: none;
+    border: none;
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    color: var(--cdisc-blue);
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    font-weight: var(--fw-medium);
+    letter-spacing: 0.01em;
+    transition: background var(--dur-fast) var(--ease-standard);
+  }
+  .expand-all-btn:hover { background: rgba(19,70,120,0.07); }
+
+  /* ── Main content ── */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-5);
+  }
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: var(--radius-pill); }
+
+  /* ── Explorer view ── */
+  .bc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-3);
+  }
+
+  .bc-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    cursor: pointer;
+    transition: border-color var(--dur-fast) var(--ease-standard),
+                box-shadow var(--dur-fast) var(--ease-standard),
+                transform var(--dur-fast) var(--ease-standard);
+    position: relative;
+    box-shadow: var(--shadow-xs);
+  }
+  .bc-card:hover {
+    border-color: var(--cdisc-blue-300);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  .bc-card.selected {
+    border-color: var(--cdisc-blue);
+    box-shadow: 0 0 0 2px rgba(19,70,120,0.18), var(--shadow-md);
+  }
+
+  .bc-card-id {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--cdisc-sky);
+    margin-bottom: var(--space-1);
+    letter-spacing: 0.04em;
+  }
+  .bc-card-name {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--text-strong);
+    margin-bottom: var(--space-3);
+    line-height: var(--lh-snug);
+  }
+  .bc-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  /* Badge component — CDISC soft-tone style */
+  .bc-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+  }
+  .bc-tag.scheme-collection_method   { background: rgba(83,50,120,0.10);  color: var(--cdisc-purple); }
+  .bc-tag.scheme-concept_group       { background: rgba(19,70,120,0.10);  color: var(--cdisc-blue); }
+  .bc-tag.scheme-therapeutic_area    { background: rgba(40,96,64,0.10);   color: var(--cdisc-green); }
+  .bc-tag.scheme-implementation_area { background: rgba(213,126,0,0.12);  color: var(--cdisc-orange); }
+
+  /* ── Detail panel ── */
+  .detail-panel {
+    position: fixed;
+    top: 56px;
+    right: -480px;
+    width: 460px;
+    height: calc(100vh - 56px);
+    background: var(--white);
+    border-left: 1px solid var(--border-default);
+    box-shadow: var(--shadow-lg);
+    z-index: 50;
+    transition: right var(--dur-slow) var(--ease-out);
+    overflow-y: auto;
+    padding: var(--space-5);
+  }
+  .detail-panel.open { right: 0; }
+  .detail-panel::-webkit-scrollbar { width: 4px; }
+  .detail-panel::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: var(--radius-pill); }
+
+  .detail-close {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+  }
+  .detail-close:hover { background: var(--gray-100); color: var(--text-body); }
+
+  .detail-id {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--cdisc-sky);
+    margin-bottom: var(--space-1);
+    letter-spacing: 0.06em;
+  }
+  .detail-name {
+    font-size: var(--fs-h3);
+    font-weight: var(--fw-bold);
+    color: var(--text-strong);
+    letter-spacing: var(--ls-snug);
+    line-height: var(--lh-snug);
+    padding-right: 32px;
+    margin-bottom: var(--space-3);
+  }
+  /* Brand accent rule under the heading */
+  .detail-rule {
+    width: 40px;
+    height: var(--accent-bar);
+    background: var(--cdisc-blue);
+    border-radius: var(--radius-pill);
+    margin-bottom: var(--space-5);
+  }
+
+  .detail-section { margin-bottom: var(--space-5); }
+  .detail-section-title {
+    font-size: var(--fs-overline);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: var(--ls-overline);
+    color: var(--cdisc-blue);
+    margin-bottom: var(--space-2);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .detail-value {
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-1);
+  }
+  .detail-value-label { font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--text-body); }
+  .detail-value-desc { color: var(--text-muted); font-size: 11px; margin-top: 2px; line-height: 1.4; }
+
+  /* Related BCs */
+  .related-bc {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 4px 10px;
+    background: var(--surface-subtle);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    color: var(--text-body);
+    cursor: pointer;
+    margin: 2px;
+    transition: border-color var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+  }
+  .related-bc:hover { border-color: var(--cdisc-blue); color: var(--cdisc-blue); }
+
+  /* ── Matrix view ── */
+  .matrix-container {
+    overflow: auto;
+    background: var(--white);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  .matrix-controls {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    margin-bottom: var(--space-3);
+  }
+  .matrix-controls label {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  .matrix-controls select {
+    padding: 7px 10px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    color: var(--text-body);
+    background: var(--white);
+    cursor: pointer;
+    outline: none;
+    transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+  }
+  .matrix-controls select:focus { border-color: var(--cdisc-blue); box-shadow: var(--shadow-focus); }
+
+  table.matrix {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: var(--fs-xs);
+  }
+  table.matrix th {
+    background: var(--cdisc-navy);
+    color: var(--white);
+    padding: 9px 12px;
+    font-weight: var(--fw-bold);
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    text-align: left;
+  }
+  table.matrix th:first-child { position: sticky; left: 0; z-index: 3; }
+  table.matrix td {
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+  }
+  table.matrix td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--surface-subtle);
+    font-weight: var(--fw-medium);
+    z-index: 1;
+    border-right: 1px solid var(--border-default);
+  }
+  table.matrix tr:hover td { background: rgba(19,70,120,0.05); }
+  table.matrix tr:hover td:first-child { background: rgba(19,70,120,0.09); }
+
+  .matrix-dot {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background: var(--cdisc-blue);
+    border-radius: var(--radius-xs);
+    opacity: 0.72;
+  }
+
+  /* ── Grouped-list view ── */
+  .grouped-list { display: flex; flex-direction: column; gap: var(--space-4); }
+
+  .grouped-scheme {
+    background: var(--white);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .grouped-scheme-header {
+    padding: 11px var(--space-4);
+    background: var(--cdisc-navy);
+    color: var(--white);
+    border-bottom: var(--accent-bar) solid var(--cdisc-blue);
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+  }
+  .grouped-scheme-header h3 { font-size: var(--fs-sm); font-weight: var(--fw-bold); letter-spacing: 0.01em; flex-shrink: 0; }
+  .grouped-scheme-header p { font-size: var(--fs-xs); color: var(--text-on-dark-muted); line-height: var(--lh-normal); }
+
+  .grouped-value-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    padding: 9px 0 9px var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background var(--dur-fast) var(--ease-standard);
+  }
+  .grouped-value-row:last-child { border-bottom: none; }
+
+  .grouped-value-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 204px;
+    min-width: 204px;
+    padding-right: var(--space-3);
+    padding-top: 2px;
+    cursor: pointer;
+  }
+  .grouped-value-meta:hover .grouped-value-name { color: var(--cdisc-blue); }
+  .grouped-value-meta:hover .grouped-value-arrow { opacity: 1; }
+
+  .grouped-value-name {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    color: var(--text-body);
+    transition: color var(--dur-fast) var(--ease-standard);
+    line-height: var(--lh-snug);
+    flex: 1;
+  }
+  .grouped-value-arrow {
+    font-size: 10px;
+    color: var(--cdisc-blue);
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity var(--dur-fast) var(--ease-standard);
+  }
+
+  .grouped-bc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex: 1;
+    padding-right: var(--space-4);
+  }
+  .bc-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    background: var(--surface-subtle);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    color: var(--text-body);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color var(--dur-fast) var(--ease-standard),
+                color var(--dur-fast) var(--ease-standard),
+                background var(--dur-fast) var(--ease-standard);
+  }
+  .bc-chip:hover { border-color: var(--cdisc-blue); color: var(--cdisc-blue); background: rgba(19,70,120,0.04); }
+  .bc-chip.selected { border-color: var(--cdisc-blue); background: rgba(19,70,120,0.10); color: var(--cdisc-blue); font-weight: var(--fw-bold); }
+
+  /* ── Scheme overview view ── */
+  .scheme-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-4);
+  }
+  .scheme-card {
+    background: var(--white);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .scheme-card-header {
+    padding: var(--space-4);
+    background: var(--cdisc-navy);
+    color: var(--white);
+    border-bottom: var(--accent-bar) solid var(--cdisc-blue);
+  }
+  .scheme-card-header h3 { font-size: var(--fs-sm); font-weight: var(--fw-bold); letter-spacing: 0.01em; }
+  .scheme-card-header p { font-size: var(--fs-xs); color: var(--text-on-dark-muted); margin-top: 4px; line-height: var(--lh-normal); }
+  .scheme-card-body { padding: var(--space-1) 0; }
+  .scheme-value-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: 8px var(--space-4);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-standard);
+  }
+  .scheme-value-row:hover { background: var(--surface-subtle); }
+  .scheme-value-label { font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--text-body); }
+  .scheme-value-count {
+    font-size: 11px;
+    background: var(--gray-100);
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-weight: var(--fw-bold);
+    white-space: nowrap;
+    transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+  }
+  .scheme-value-row:hover .scheme-value-count { background: var(--cdisc-blue); color: var(--white); }
+
+  /* ── Empty / import state ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 40px;
+  }
+  .empty-state > svg { margin-bottom: 20px; opacity: 0.22; }
+  .empty-state h2 {
+    font-size: var(--fs-h3);
+    font-weight: var(--fw-bold);
+    color: var(--text-strong);
+    letter-spacing: var(--ls-snug);
+    margin-bottom: var(--space-2);
+  }
+  .empty-state p {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    max-width: 360px;
+    margin-bottom: var(--space-5);
+    line-height: var(--lh-relaxed);
+  }
+  .import-area {
+    border: 2px dashed var(--border-default);
+    border-radius: var(--radius-xl);
+    padding: 36px 56px;
+    cursor: pointer;
+    transition: border-color var(--dur-base) var(--ease-standard), background var(--dur-base) var(--ease-standard);
+    margin-bottom: var(--space-4);
+  }
+  .import-area:hover, .import-area.drag-over {
+    border-color: var(--cdisc-blue);
+    background: rgba(19,70,120,0.04);
+  }
+  .import-area svg { opacity: 0.3; margin-bottom: 8px; }
+  .import-area-text { font-size: var(--fs-xs); color: var(--text-muted); }
+
+  /* Primary action button */
+  .btn-primary {
+    padding: 10px 24px;
+    background: var(--action-bg);
+    color: var(--action-fg);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+    line-height: 1;
+  }
+  .btn-primary:hover { background: var(--action-bg-hover); }
+  .btn-primary:active { background: var(--action-bg-active); transform: translateY(1px); }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .bc-card { animation: fadeUp 0.22s var(--ease-out) both; }
+  .bc-grid .bc-card:nth-child(n) { animation-delay: calc(0.025s * var(--i, 0)); }
+
+  /* ── Responsive ── */
+  @media (max-width: 800px) {
+    .sidebar { display: none; }
+    .bc-grid { grid-template-columns: 1fr; }
+    .detail-panel { width: 100%; right: -100%; }
+  }
+
+  /* Utility */
+  .hidden { display: none !important; }
+  mark {
+    background: rgba(235, 169, 30, 0.30);
+    color: var(--text-strong);
+    font-weight: var(--fw-bold);
+    padding: 1px 2px;
+    border-radius: 2px;
+    border-bottom: 2px solid rgba(235, 169, 30, 0.80);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <div class="header-dots">
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-wordmark">
+      <span class="header-eyebrow">CDISC</span>
+      <span class="header-title">BC Grouping Explorer</span>
+    </div>
+  </div>
+
+  <div class="header-search">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="6.5" cy="6.5" r="5.5" stroke="white" stroke-width="1.5"/>
+      <line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <input id="globalSearch" type="text" placeholder="Search BCs by name, code, or classification…" autocomplete="off">
+    <button class="search-clear-btn hidden" id="searchClearBtn" aria-label="Clear search" title="Clear search">✕</button>
+    <button class="search-scope-btn" id="searchScopeBtn" title="Names only: searches BC name and code. All fields: also searches classification tags and descriptions.">Names only</button>
+  </div>
+  <span class="search-count" id="searchCount"></span>
+
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="explorer">Explorer</button>
+    <button class="view-tab" data-view="matrix">Browse</button>
+  </div>
+
+  <button class="import-btn" id="importBtn">Import XLSX</button>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden">
+</header>
+
+<div class="prototype-banner" id="prototypeBanner">
+  <span class="prototype-banner-label">ⓘ Prototype note</span>
+  <span class="prototype-banner-text">This wireframe demonstrates how BC grouping may be presented and used. It is intended for discussion only and is not a CDISC product, service, or supported application.</span>
+</div>
+
+<div class="app-body">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-toolbar">
+      <button class="show-zeros-btn" id="showZerosBtn" disabled>Show zeros</button>
+      <button class="expand-all-btn" id="expandAllBtn">Collapse all</button>
+    </div>
+    <button class="clear-filters" id="clearFilters">Clear all</button>
+    <div id="facets"></div>
+  </aside>
+
+  <main class="main" id="mainContent">
+    <div id="emptyState" class="empty-state">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <rect x="6" y="10" width="40" height="32" rx="4" stroke="currentColor" stroke-width="2"/>
+        <path d="M15 22h22M15 28h16M15 34h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <h2>Load classification data</h2>
+      <p>Import an XLSX file with sheets matching the BC classification model, or use the embedded mock data to explore.</p>
+      <div class="import-area" id="dropZone">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4v18m0 0l-6-6m6 6l6-6M6 26h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="import-area-text">Drop XLSX here or click to browse</div>
+      </div>
+      <button class="btn-primary" id="loadMock">Load mock data</button>
+    </div>
+
+    <div id="explorerView" class="hidden"></div>
+    <div id="matrixView" class="hidden"></div>
+  </main>
+</div>
+
+<div class="detail-panel" id="detailPanel">
+  <button class="detail-close" id="detailClose">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M5 5l8 8M13 5l-8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div id="detailContent"></div>
+</div>
+
+<script>
+// ─── Data store ───
+let store = { bcs: [], schemes: [], values: [], assignments: [] };
+let activeFilters = {}; // scheme_id → Set of value_ids
+let collapsedSchemes = new Set();
+let showZeros = false;
+let searchQuery = '';
+let searchAllProperties = false;
+let currentView = 'explorer';
+let selectedBcId = null;
+
+// ─── Mock data (embedded) ───
+const MOCK_DATA = {
+  bcs: [
+    {bc_id:"C28421",short_name:"Sex",ncit_code:"C28421"},
+    {bc_id:"C17049",short_name:"Race",ncit_code:"C17049"},
+    {bc_id:"C174446",short_name:"Body Temperature",ncit_code:"C174446"},
+    {bc_id:"C25208",short_name:"Weight",ncit_code:"C25208"},
+    {bc_id:"C25347",short_name:"Height",ncit_code:"C25347"},
+    {bc_id:"C64433",short_name:"Alanine Aminotransferase Measurement",ncit_code:"C64433"},
+    {bc_id:"C64431",short_name:"Albumin Measurement",ncit_code:"C64431"},
+    {bc_id:"C64432",short_name:"Alkaline Phosphatase Measurement",ncit_code:"C64432"},
+    {bc_id:"C64467",short_name:"Aspartate Aminotransferase Measurement",ncit_code:"C64467"},
+    {bc_id:"C64547",short_name:"Creatinine Measurement",ncit_code:"C64547"},
+    {bc_id:"C64853",short_name:"Potassium Measurement",ncit_code:"C64853"},
+    {bc_id:"C64809",short_name:"Sodium Measurement",ncit_code:"C64809"},
+    {bc_id:"C64849",short_name:"Hemoglobin A1C Measurement",ncit_code:"C64849"},
+    {bc_id:"C179175",short_name:"Solicited Adverse Event",ncit_code:"C179175"},
+    {bc_id:"C25298",short_name:"Systolic Blood Pressure",ncit_code:"C25298"},
+    {bc_id:"C25299",short_name:"Diastolic Blood Pressure",ncit_code:"C25299"},
+    {bc_id:"C49677",short_name:"Heart Rate",ncit_code:"C49677"},
+    {bc_id:"C83119",short_name:"Physical Examination Finding",ncit_code:"C83119"},
+    {bc_id:"C81229",short_name:"Alcohol Use History",ncit_code:"C81229"},
+    {bc_id:"C201990",short_name:"Caffeine Use History",ncit_code:"C201990"},
+    {bc_id:"C62085",short_name:"ECG Measurement",ncit_code:"C62085"},
+    {bc_id:"C83056",short_name:"Concomitant Medication Yes No Indicator",ncit_code:"C83056"},
+    {bc_id:"C100247",short_name:"CDISC ADAS-Cog - Word Recognition Summary Score",ncit_code:"C100247"},
+    {bc_id:"C16735",short_name:"Informed Consent",ncit_code:"C16735"}
+  ],
+  schemes: [
+    {scheme_id:"collection_method",name:"Collection Method",description:"How the data may be collected, acquired, or submitted for the BC.",purpose:"Support workflow-oriented filtering for study setup and SoA authoring.",intended_use:"Use as a UI or query facet such as CRF, data transfer, questionnaire, or device/eSource."},
+    {scheme_id:"concept_group",name:"Concept Group",description:"A practical human-facing grouping that helps users find related BCs.",purpose:"Support browsing, filtering, and attachment of related BCs to protocol activities.",intended_use:"Use for groupings such as Liver Function Tests, Blood Pressure, Vital Signs, or Substance Use."},
+    {scheme_id:"therapeutic_area",name:"Therapeutic Area",description:"A study-context tag indicating where a BC may commonly be relevant.",purpose:"Support study-context-aware BC discovery.",intended_use:"Use as an optional filter when therapeutic area is known in digital study setup."},
+    {scheme_id:"implementation_area",name:"Implementation Area",description:"A lightweight bridge to a likely implementation or data collection area.",purpose:"Help users relate BCs to familiar implementation areas without changing the BC definition.",intended_use:"Use as a coarse implementation hint such as DM, VS, LB, AE, MH, EG, CM, QS, PE, or DS."}
+  ],
+  values: [
+    {value_id:"cm_crf",scheme_id:"collection_method",label:"CRF",description:"Data captured on a case report form or equivalent study data collection form."},
+    {value_id:"cm_data_transfer",scheme_id:"collection_method",label:"Data Transfer",description:"Data acquired through file transfer, system integration, laboratory feed, or vendor transfer."},
+    {value_id:"cm_questionnaire",scheme_id:"collection_method",label:"Questionnaire / Assessment",description:"Data collected through a questionnaire, rating scale, or assessment instrument."},
+    {value_id:"cm_device_esource",scheme_id:"collection_method",label:"Device / eSource",description:"Data captured through device, instrument, wearable, or other eSource mechanism."},
+    {value_id:"cg_demographics",scheme_id:"concept_group",label:"Demographics",description:"Subject demographic attributes such as sex or race."},
+    {value_id:"cg_vital_signs",scheme_id:"concept_group",label:"Vital Signs",description:"Vital sign observations such as temperature, heart rate, height, or weight."},
+    {value_id:"cg_blood_pressure",scheme_id:"concept_group",label:"Blood Pressure",description:"Blood pressure observations such as systolic and diastolic blood pressure."},
+    {value_id:"cg_body_measurements",scheme_id:"concept_group",label:"Body Measurements",description:"Body size or anthropometric observations such as height or weight."},
+    {value_id:"cg_liver_function_tests",scheme_id:"concept_group",label:"Liver Function Tests",description:"Laboratory tests commonly associated with liver function or liver safety review."},
+    {value_id:"cg_renal_function_tests",scheme_id:"concept_group",label:"Renal Function Tests",description:"Laboratory tests commonly associated with renal function review."},
+    {value_id:"cg_electrolytes",scheme_id:"concept_group",label:"Electrolytes",description:"Laboratory measurements of electrolytes such as sodium and potassium."},
+    {value_id:"cg_hemoglobin_measurements",scheme_id:"concept_group",label:"Hemoglobin Measurements",description:"Laboratory measurements related to hemoglobin or glycemic control markers."},
+    {value_id:"cg_adverse_events",scheme_id:"concept_group",label:"Adverse Events",description:"Events or findings related to adverse event reporting."},
+    {value_id:"cg_physical_exam",scheme_id:"concept_group",label:"Physical Examination",description:"Findings collected during a physical examination."},
+    {value_id:"cg_medical_history",scheme_id:"concept_group",label:"Medical History",description:"Current or past medical, social, or substance use history."},
+    {value_id:"cg_substance_use",scheme_id:"concept_group",label:"Substance Use",description:"Alcohol, caffeine, tobacco, or other substance use history."},
+    {value_id:"cg_ecg_findings",scheme_id:"concept_group",label:"ECG Findings",description:"Measurements or findings derived from electrocardiogram data."},
+    {value_id:"cg_concomitant_medications",scheme_id:"concept_group",label:"Concomitant Medications",description:"Medication use information collected during a study."},
+    {value_id:"cg_cognitive_assessment",scheme_id:"concept_group",label:"Cognitive Assessment",description:"Questionnaire or rating-scale concepts related to cognitive assessment."},
+    {value_id:"cg_subject_disposition",scheme_id:"concept_group",label:"Subject Disposition",description:"Subject-level milestones or disposition events such as informed consent."},
+    {value_id:"ta_general",scheme_id:"therapeutic_area",label:"General Medicine",description:"Broadly applicable across many clinical studies."},
+    {value_id:"ta_liver_safety",scheme_id:"therapeutic_area",label:"Hepatology / Liver Safety",description:"Relevant to liver function or liver safety monitoring."},
+    {value_id:"ta_nephrology",scheme_id:"therapeutic_area",label:"Nephrology / Renal Safety",description:"Relevant to renal function or renal safety monitoring."},
+    {value_id:"ta_cardiovascular",scheme_id:"therapeutic_area",label:"Cardiovascular",description:"Relevant to cardiovascular monitoring or assessment."},
+    {value_id:"ta_metabolic",scheme_id:"therapeutic_area",label:"Diabetes / Metabolic",description:"Relevant to metabolic or glycemic assessment."},
+    {value_id:"ta_alzheimers",scheme_id:"therapeutic_area",label:"Alzheimer's Disease",description:"Relevant to Alzheimer's disease or cognitive assessment studies."},
+    {value_id:"ta_clinical_safety",scheme_id:"therapeutic_area",label:"Clinical Safety",description:"Relevant to safety monitoring, adverse events, medications, or examinations."},
+    {value_id:"ia_dm",scheme_id:"implementation_area",label:"DM",description:"Demographics implementation area."},
+    {value_id:"ia_vs",scheme_id:"implementation_area",label:"VS",description:"Vital Signs implementation area."},
+    {value_id:"ia_lb",scheme_id:"implementation_area",label:"LB",description:"Laboratory Tests implementation area."},
+    {value_id:"ia_ae",scheme_id:"implementation_area",label:"AE",description:"Adverse Events implementation area."},
+    {value_id:"ia_pe",scheme_id:"implementation_area",label:"PE",description:"Physical Examination implementation area."},
+    {value_id:"ia_mh",scheme_id:"implementation_area",label:"MH",description:"Medical History implementation area."},
+    {value_id:"ia_eg",scheme_id:"implementation_area",label:"EG",description:"ECG implementation area."},
+    {value_id:"ia_cm",scheme_id:"implementation_area",label:"CM",description:"Concomitant Medications implementation area."},
+    {value_id:"ia_qs",scheme_id:"implementation_area",label:"QS",description:"Questionnaires implementation area."},
+    {value_id:"ia_ds",scheme_id:"implementation_area",label:"DS",description:"Disposition implementation area."}
+  ],
+  assignments: [
+    {assignment_id:"bca_0001",bc_id:"C28421",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0002",bc_id:"C28421",scheme_id:"concept_group",value_id:"cg_demographics"},
+    {assignment_id:"bca_0003",bc_id:"C28421",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0004",bc_id:"C28421",scheme_id:"implementation_area",value_id:"ia_dm"},
+    {assignment_id:"bca_0005",bc_id:"C17049",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0006",bc_id:"C17049",scheme_id:"concept_group",value_id:"cg_demographics"},
+    {assignment_id:"bca_0007",bc_id:"C17049",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0008",bc_id:"C17049",scheme_id:"implementation_area",value_id:"ia_dm"},
+    {assignment_id:"bca_0009",bc_id:"C174446",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0010",bc_id:"C174446",scheme_id:"collection_method",value_id:"cm_device_esource"},
+    {assignment_id:"bca_0011",bc_id:"C174446",scheme_id:"concept_group",value_id:"cg_vital_signs"},
+    {assignment_id:"bca_0012",bc_id:"C174446",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0013",bc_id:"C174446",scheme_id:"implementation_area",value_id:"ia_vs"},
+    {assignment_id:"bca_0014",bc_id:"C25208",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0015",bc_id:"C25208",scheme_id:"collection_method",value_id:"cm_device_esource"},
+    {assignment_id:"bca_0016",bc_id:"C25208",scheme_id:"concept_group",value_id:"cg_vital_signs"},
+    {assignment_id:"bca_0017",bc_id:"C25208",scheme_id:"concept_group",value_id:"cg_body_measurements"},
+    {assignment_id:"bca_0018",bc_id:"C25208",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0019",bc_id:"C25208",scheme_id:"implementation_area",value_id:"ia_vs"},
+    {assignment_id:"bca_0020",bc_id:"C25347",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0021",bc_id:"C25347",scheme_id:"collection_method",value_id:"cm_device_esource"},
+    {assignment_id:"bca_0022",bc_id:"C25347",scheme_id:"concept_group",value_id:"cg_vital_signs"},
+    {assignment_id:"bca_0023",bc_id:"C25347",scheme_id:"concept_group",value_id:"cg_body_measurements"},
+    {assignment_id:"bca_0024",bc_id:"C25347",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0025",bc_id:"C25347",scheme_id:"implementation_area",value_id:"ia_vs"},
+    {assignment_id:"bca_0026",bc_id:"C64433",scheme_id:"collection_method",value_id:"cm_data_transfer"},
+    {assignment_id:"bca_0027",bc_id:"C64433",scheme_id:"concept_group",value_id:"cg_liver_function_tests"},
+    {assignment_id:"bca_0028",bc_id:"C64433",scheme_id:"therapeutic_area",value_id:"ta_liver_safety"},
+    {assignment_id:"bca_0029",bc_id:"C64433",scheme_id:"implementation_area",value_id:"ia_lb"},
+    {assignment_id:"bca_0030",bc_id:"C64431",scheme_id:"collection_method",value_id:"cm_data_transfer"},
+    {assignment_id:"bca_0031",bc_id:"C64431",scheme_id:"concept_group",value_id:"cg_liver_function_tests"},
+    {assignment_id:"bca_0032",bc_id:"C64431",scheme_id:"therapeutic_area",value_id:"ta_liver_safety"},
+    {assignment_id:"bca_0033",bc_id:"C64431",scheme_id:"implementation_area",value_id:"ia_lb"},
+    {assignment_id:"bca_0034",bc_id:"C64432",scheme_id:"collection_method",value_id:"cm_data_transfer"},
+    {assignment_id:"bca_0035",bc_id:"C64432",scheme_id:"concept_group",value_id:"cg_liver_function_tests"},
+    {assignment_id:"bca_0036",bc_id:"C64432",scheme_id:"therapeutic_area",value_id:"ta_liver_safety"},
+    {assignment_id:"bca_0037",bc_id:"C64432",scheme_id:"implementation_area",value_id:"ia_lb"},
+    {assignment_id:"bca_0038",bc_id:"C64467",scheme_id:"collection_method",value_id:"cm_data_transfer"},
+    {assignment_id:"bca_0039",bc_id:"C64467",scheme_id:"concept_group",value_id:"cg_liver_function_tests"},
+    {assignment_id:"bca_0040",bc_id:"C64467",scheme_id:"therapeutic_area",value_id:"ta_liver_safety"},
+    {assignment_id:"bca_0041",bc_id:"C64467",scheme_id:"implementation_area",value_id:"ia_lb"},
+    {assignment_id:"bca_0042",bc_id:"C64547",scheme_id:"collection_method",value_id:"cm_data_transfer"},
+    {assignment_id:"bca_0043",bc_id:"C64547",scheme_id:"concept_group",value_id:"cg_renal_function_tests"},
+    {assignment_id:"bca_0044",bc_id:"C64547",scheme_id:"therapeutic_area",value_id:"ta_nephrology"},
+    {assignment_id:"bca_0045",bc_id:"C64547",scheme_id:"implementation_area",value_id:"ia_lb"},
+    {assignment_id:"bca_0046",bc_id:"C64853",scheme_id:"collection_method",value_id:"cm_data_transfer"},
+    {assignment_id:"bca_0047",bc_id:"C64853",scheme_id:"concept_group",value_id:"cg_electrolytes"},
+    {assignment_id:"bca_0048",bc_id:"C64853",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0049",bc_id:"C64853",scheme_id:"implementation_area",value_id:"ia_lb"},
+    {assignment_id:"bca_0050",bc_id:"C64809",scheme_id:"collection_method",value_id:"cm_data_transfer"},
+    {assignment_id:"bca_0051",bc_id:"C64809",scheme_id:"concept_group",value_id:"cg_electrolytes"},
+    {assignment_id:"bca_0052",bc_id:"C64809",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0053",bc_id:"C64809",scheme_id:"implementation_area",value_id:"ia_lb"},
+    {assignment_id:"bca_0054",bc_id:"C64849",scheme_id:"collection_method",value_id:"cm_data_transfer"},
+    {assignment_id:"bca_0055",bc_id:"C64849",scheme_id:"concept_group",value_id:"cg_hemoglobin_measurements"},
+    {assignment_id:"bca_0056",bc_id:"C64849",scheme_id:"therapeutic_area",value_id:"ta_metabolic"},
+    {assignment_id:"bca_0057",bc_id:"C64849",scheme_id:"implementation_area",value_id:"ia_lb"},
+    {assignment_id:"bca_0058",bc_id:"C179175",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0059",bc_id:"C179175",scheme_id:"concept_group",value_id:"cg_adverse_events"},
+    {assignment_id:"bca_0060",bc_id:"C179175",scheme_id:"therapeutic_area",value_id:"ta_clinical_safety"},
+    {assignment_id:"bca_0061",bc_id:"C179175",scheme_id:"implementation_area",value_id:"ia_ae"},
+    {assignment_id:"bca_0062",bc_id:"C25298",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0063",bc_id:"C25298",scheme_id:"collection_method",value_id:"cm_device_esource"},
+    {assignment_id:"bca_0064",bc_id:"C25298",scheme_id:"concept_group",value_id:"cg_vital_signs"},
+    {assignment_id:"bca_0065",bc_id:"C25298",scheme_id:"concept_group",value_id:"cg_blood_pressure"},
+    {assignment_id:"bca_0066",bc_id:"C25298",scheme_id:"therapeutic_area",value_id:"ta_cardiovascular"},
+    {assignment_id:"bca_0067",bc_id:"C25298",scheme_id:"implementation_area",value_id:"ia_vs"},
+    {assignment_id:"bca_0068",bc_id:"C25299",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0069",bc_id:"C25299",scheme_id:"collection_method",value_id:"cm_device_esource"},
+    {assignment_id:"bca_0070",bc_id:"C25299",scheme_id:"concept_group",value_id:"cg_vital_signs"},
+    {assignment_id:"bca_0071",bc_id:"C25299",scheme_id:"concept_group",value_id:"cg_blood_pressure"},
+    {assignment_id:"bca_0072",bc_id:"C25299",scheme_id:"therapeutic_area",value_id:"ta_cardiovascular"},
+    {assignment_id:"bca_0073",bc_id:"C25299",scheme_id:"implementation_area",value_id:"ia_vs"},
+    {assignment_id:"bca_0074",bc_id:"C49677",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0075",bc_id:"C49677",scheme_id:"collection_method",value_id:"cm_device_esource"},
+    {assignment_id:"bca_0076",bc_id:"C49677",scheme_id:"concept_group",value_id:"cg_vital_signs"},
+    {assignment_id:"bca_0077",bc_id:"C49677",scheme_id:"therapeutic_area",value_id:"ta_cardiovascular"},
+    {assignment_id:"bca_0078",bc_id:"C49677",scheme_id:"implementation_area",value_id:"ia_vs"},
+    {assignment_id:"bca_0079",bc_id:"C83119",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0080",bc_id:"C83119",scheme_id:"concept_group",value_id:"cg_physical_exam"},
+    {assignment_id:"bca_0081",bc_id:"C83119",scheme_id:"therapeutic_area",value_id:"ta_clinical_safety"},
+    {assignment_id:"bca_0082",bc_id:"C83119",scheme_id:"implementation_area",value_id:"ia_pe"},
+    {assignment_id:"bca_0083",bc_id:"C81229",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0084",bc_id:"C81229",scheme_id:"concept_group",value_id:"cg_medical_history"},
+    {assignment_id:"bca_0085",bc_id:"C81229",scheme_id:"concept_group",value_id:"cg_substance_use"},
+    {assignment_id:"bca_0086",bc_id:"C81229",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0087",bc_id:"C81229",scheme_id:"implementation_area",value_id:"ia_mh"},
+    {assignment_id:"bca_0088",bc_id:"C201990",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0089",bc_id:"C201990",scheme_id:"concept_group",value_id:"cg_medical_history"},
+    {assignment_id:"bca_0090",bc_id:"C201990",scheme_id:"concept_group",value_id:"cg_substance_use"},
+    {assignment_id:"bca_0091",bc_id:"C201990",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0092",bc_id:"C201990",scheme_id:"implementation_area",value_id:"ia_mh"},
+    {assignment_id:"bca_0093",bc_id:"C62085",scheme_id:"collection_method",value_id:"cm_device_esource"},
+    {assignment_id:"bca_0094",bc_id:"C62085",scheme_id:"collection_method",value_id:"cm_data_transfer"},
+    {assignment_id:"bca_0095",bc_id:"C62085",scheme_id:"concept_group",value_id:"cg_ecg_findings"},
+    {assignment_id:"bca_0096",bc_id:"C62085",scheme_id:"therapeutic_area",value_id:"ta_cardiovascular"},
+    {assignment_id:"bca_0097",bc_id:"C62085",scheme_id:"implementation_area",value_id:"ia_eg"},
+    {assignment_id:"bca_0098",bc_id:"C83056",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0099",bc_id:"C83056",scheme_id:"concept_group",value_id:"cg_concomitant_medications"},
+    {assignment_id:"bca_0100",bc_id:"C83056",scheme_id:"therapeutic_area",value_id:"ta_clinical_safety"},
+    {assignment_id:"bca_0101",bc_id:"C83056",scheme_id:"implementation_area",value_id:"ia_cm"},
+    {assignment_id:"bca_0102",bc_id:"C100247",scheme_id:"collection_method",value_id:"cm_questionnaire"},
+    {assignment_id:"bca_0103",bc_id:"C100247",scheme_id:"concept_group",value_id:"cg_cognitive_assessment"},
+    {assignment_id:"bca_0104",bc_id:"C100247",scheme_id:"therapeutic_area",value_id:"ta_alzheimers"},
+    {assignment_id:"bca_0105",bc_id:"C100247",scheme_id:"implementation_area",value_id:"ia_qs"},
+    {assignment_id:"bca_0106",bc_id:"C16735",scheme_id:"collection_method",value_id:"cm_crf"},
+    {assignment_id:"bca_0107",bc_id:"C16735",scheme_id:"concept_group",value_id:"cg_subject_disposition"},
+    {assignment_id:"bca_0108",bc_id:"C16735",scheme_id:"therapeutic_area",value_id:"ta_general"},
+    {assignment_id:"bca_0109",bc_id:"C16735",scheme_id:"implementation_area",value_id:"ia_ds"}
+  ]
+};
+
+// ─── Lookup helpers ───
+function valueById(id) { return store.values.find(v => v.value_id === id); }
+function schemeById(id) { return store.schemes.find(s => s.scheme_id === id); }
+function bcById(id) { return store.bcs.find(b => b.bc_id === id); }
+function assignmentsForBc(bcId) { return store.assignments.filter(a => a.bc_id === bcId); }
+function bcsForValue(valueId) {
+  const bcIds = new Set(store.assignments.filter(a => a.value_id === valueId).map(a => a.bc_id));
+  return store.bcs.filter(b => bcIds.has(b.bc_id));
+}
+function valuesForScheme(schemeId) { return store.values.filter(v => v.scheme_id === schemeId); }
+
+// ─── Search match helper ───
+function bcMatchesSearch(bc, q) {
+  if (bc.short_name.toLowerCase().includes(q)) return true;
+  if (bc.bc_id.toLowerCase().includes(q)) return true;
+  if (bc.ncit_code.toLowerCase().includes(q)) return true;
+  if (!searchAllProperties) return false;
+  const asgns = assignmentsForBc(bc.bc_id);
+  return asgns.some(a => {
+    const v = valueById(a.value_id);
+    if (!v) return false;
+    if (v.label.toLowerCase().includes(q)) return true;
+    if (v.description && v.description.toLowerCase().includes(q)) return true;
+    return false;
+  });
+}
+
+// ─── Filtering logic ───
+function getFilteredBcs() {
+  let bcs = store.bcs;
+
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    bcs = bcs.filter(bc => bcMatchesSearch(bc, q));
+  }
+
+  // Facet filters: AND across schemes, OR within a scheme
+  const activeSchemes = Object.keys(activeFilters).filter(k => activeFilters[k].size > 0);
+  if (activeSchemes.length > 0) {
+    bcs = bcs.filter(bc => {
+      const asgns = assignmentsForBc(bc.bc_id);
+      return activeSchemes.every(schemeId => {
+        const selectedValues = activeFilters[schemeId];
+        return asgns.some(a => a.scheme_id === schemeId && selectedValues.has(a.value_id));
+      });
+    });
+  }
+
+  return bcs;
+}
+
+function getValueCountForFiltered(valueId, schemeId) {
+  // count how many currently-filtered BCs have this value
+  // but ignore filters from the same scheme (so counts stay useful)
+  const activeSchemes = Object.keys(activeFilters).filter(k => activeFilters[k].size > 0 && k !== schemeId);
+  let bcs = store.bcs;
+
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    bcs = bcs.filter(bc => bcMatchesSearch(bc, q));
+  }
+
+  if (activeSchemes.length > 0) {
+    bcs = bcs.filter(bc => {
+      const asgns = assignmentsForBc(bc.bc_id);
+      return activeSchemes.every(sid => {
+        const sv = activeFilters[sid];
+        return asgns.some(a => a.scheme_id === sid && sv.has(a.value_id));
+      });
+    });
+  }
+
+  const bcIds = new Set(bcs.map(b => b.bc_id));
+  return store.assignments.filter(a => a.value_id === valueId && bcIds.has(a.bc_id)).length;
+}
+
+// ─── Highlight helper ───
+function highlight(text, query) {
+  if (!query) return text;
+  const esc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(`(${esc})`, 'gi'), '<mark>$1</mark>');
+}
+
+// ─── Expand/collapse all helper ───
+function updateExpandAllBtn() {
+  const btn = document.getElementById('expandAllBtn');
+  if (!btn || !store.schemes.length) return;
+  const allCollapsed = store.schemes.every(s => collapsedSchemes.has(s.scheme_id));
+  btn.textContent = allCollapsed ? 'Expand all' : 'Collapse all';
+}
+
+// ─── Render: Facet sidebar ───
+function renderFacets() {
+  const container = document.getElementById('facets');
+  const hasFilters = Object.values(activeFilters).some(s => s.size > 0);
+  const hasActive = hasFilters || searchQuery.length > 0;
+  document.getElementById('clearFilters').classList.toggle('visible', hasActive);
+
+  container.innerHTML = store.schemes.map(scheme => {
+    const values = valuesForScheme(scheme.scheme_id);
+    const isActive = activeFilters[scheme.scheme_id] && activeFilters[scheme.scheme_id].size > 0;
+    const isCollapsed = collapsedSchemes.has(scheme.scheme_id);
+
+    return `
+      <div class="facet-group">
+        <div class="facet-header ${isCollapsed ? 'collapsed' : ''}" data-scheme="${scheme.scheme_id}">
+          <h3>${scheme.name}</h3>
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+        </div>
+        <div class="facet-list ${isCollapsed ? 'collapsed' : ''}" data-scheme="${scheme.scheme_id}">
+          ${values.map(v => {
+            const count = getValueCountForFiltered(v.value_id, scheme.scheme_id);
+            const active = activeFilters[scheme.scheme_id] && activeFilters[scheme.scheme_id].has(v.value_id);
+            if (!showZeros && count === 0 && !active) return '';
+            return `
+              <div class="facet-item ${active ? 'active' : ''}" data-value="${v.value_id}" data-scheme="${scheme.scheme_id}" title="${v.description}">
+                <div class="facet-check"></div>
+                <span class="facet-label">${v.label}</span>
+                <span class="facet-count ${count === 0 ? 'zero' : ''}">${count}</span>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Event delegation
+  container.querySelectorAll('.facet-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const schemeId = h.dataset.scheme;
+      if (collapsedSchemes.has(schemeId)) {
+        collapsedSchemes.delete(schemeId);
+      } else {
+        collapsedSchemes.add(schemeId);
+      }
+      h.classList.toggle('collapsed');
+      h.nextElementSibling.classList.toggle('collapsed');
+      updateExpandAllBtn();
+    });
+  });
+  updateExpandAllBtn();
+
+  container.querySelectorAll('.facet-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const schemeId = item.dataset.scheme;
+      const valueId = item.dataset.value;
+      if (!activeFilters[schemeId]) activeFilters[schemeId] = new Set();
+      if (activeFilters[schemeId].has(valueId)) {
+        activeFilters[schemeId].delete(valueId);
+      } else {
+        activeFilters[schemeId].add(valueId);
+      }
+      renderAll();
+    });
+  });
+
+  const showZerosBtn = document.getElementById('showZerosBtn');
+  if (showZerosBtn) {
+    showZerosBtn.disabled = store.bcs.length === 0;
+    showZerosBtn.textContent = showZeros ? 'Hide zeros' : 'Show zeros';
+    showZerosBtn.classList.toggle('on', showZeros);
+    showZerosBtn.title = showZeros
+      ? 'Currently showing all classification values, including those with 0 BCs. Click to hide them.'
+      : 'Some classification values are hidden because they have 0 matching BCs. Click to reveal them.';
+  }
+}
+
+// ─── Render: Explorer view ───
+function renderExplorer() {
+  const container = document.getElementById('explorerView');
+  const bcs = getFilteredBcs();
+
+  container.innerHTML = `<div class="bc-grid">${bcs.map((bc, i) => {
+    const asgns = assignmentsForBc(bc.bc_id);
+    const tags = asgns.map(a => {
+      const v = valueById(a.value_id);
+      return v ? `<span class="bc-tag scheme-${a.scheme_id}">${highlight(v.label, searchQuery)}</span>` : '';
+    }).join('');
+
+    return `
+      <div class="bc-card ${selectedBcId === bc.bc_id ? 'selected' : ''}" data-bc="${bc.bc_id}" style="--i:${i}">
+        <div class="bc-card-id">${highlight(bc.bc_id, searchQuery)}</div>
+        <div class="bc-card-name">${highlight(bc.short_name, searchQuery)}</div>
+        <div class="bc-card-tags">${tags}</div>
+      </div>`;
+  }).join('')}</div>`;
+
+  container.querySelectorAll('.bc-card').forEach(card => {
+    card.addEventListener('click', () => openDetail(card.dataset.bc));
+  });
+}
+
+// ─── Render: Matrix view (grouped list) ───
+function renderMatrix() {
+  const container = document.getElementById('matrixView');
+  const filteredBcIds = new Set(getFilteredBcs().map(b => b.bc_id));
+
+  const schemeBlocks = store.schemes.map(scheme => {
+    const values = valuesForScheme(scheme.scheme_id);
+
+    const valueRows = values.map(v => {
+      const bcs = bcsForValue(v.value_id).filter(b => filteredBcIds.has(b.bc_id));
+      if (bcs.length === 0) return '';
+      return `
+        <div class="grouped-value-row">
+          <div class="grouped-value-meta" data-scheme="${scheme.scheme_id}" data-value="${v.value_id}" title="${v.description} — click to filter Explorer">
+            <span class="grouped-value-name">${v.label}</span>
+            <span class="facet-count">${bcs.length}</span>
+            <span class="grouped-value-arrow">→</span>
+          </div>
+          <div class="grouped-bc-chips">
+            ${bcs.map(bc => `<span class="bc-chip ${selectedBcId === bc.bc_id ? 'selected' : ''}" data-bc="${bc.bc_id}">${highlight(bc.short_name, searchQuery)}</span>`).join('')}
+          </div>
+        </div>`;
+    }).join('');
+
+    if (!valueRows.trim()) return '';
+    return `
+      <div class="grouped-scheme">
+        <div class="grouped-scheme-header">
+          <h3>${scheme.name}</h3>
+          <p>${scheme.purpose}</p>
+        </div>
+        <div class="grouped-scheme-body">${valueRows}</div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="grouped-list">${schemeBlocks}</div>`;
+
+  container.querySelectorAll('.bc-chip').forEach(chip => {
+    chip.addEventListener('click', () => openDetail(chip.dataset.bc));
+  });
+
+  container.querySelectorAll('.grouped-value-meta').forEach(meta => {
+    meta.addEventListener('click', () => {
+      const schemeId = meta.dataset.scheme;
+      const valueId = meta.dataset.value;
+      if (!activeFilters[schemeId]) activeFilters[schemeId] = new Set();
+      activeFilters[schemeId].clear();
+      activeFilters[schemeId].add(valueId);
+      switchView('explorer');
+      renderAll();
+    });
+  });
+}
+
+// ─── Render: Schemes overview ───
+function renderSchemes() {
+  const container = document.getElementById('schemesView');
+  const filteredIds = new Set(getFilteredBcs().map(b => b.bc_id));
+
+  container.innerHTML = `<div class="scheme-overview">${store.schemes.map(scheme => {
+    const values = valuesForScheme(scheme.scheme_id);
+    return `
+      <div class="scheme-card">
+        <div class="scheme-card-header">
+          <h3>${scheme.name}</h3>
+          <p>${scheme.purpose}</p>
+        </div>
+        <div class="scheme-card-body">
+          ${values.map(v => {
+            const count = store.assignments.filter(a => a.value_id === v.value_id && filteredIds.has(a.bc_id)).length;
+            return `
+              <div class="scheme-value-row" data-scheme="${scheme.scheme_id}" data-value="${v.value_id}" title="${v.description}">
+                <span class="scheme-value-label">${v.label}</span>
+                <span class="scheme-value-count">${count}</span>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('')}</div>`;
+
+  container.querySelectorAll('.scheme-value-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const schemeId = row.dataset.scheme;
+      const valueId = row.dataset.value;
+      if (!activeFilters[schemeId]) activeFilters[schemeId] = new Set();
+      activeFilters[schemeId].clear();
+      activeFilters[schemeId].add(valueId);
+      switchView('explorer');
+      renderAll();
+    });
+  });
+}
+
+// ─── Detail panel ───
+function openDetail(bcId) {
+  selectedBcId = bcId;
+  const bc = bcById(bcId);
+  if (!bc) return;
+
+  const asgns = assignmentsForBc(bcId);
+  const panel = document.getElementById('detailPanel');
+  const content = document.getElementById('detailContent');
+
+  // Group assignments by scheme
+  const grouped = {};
+  asgns.forEach(a => {
+    if (!grouped[a.scheme_id]) grouped[a.scheme_id] = [];
+    grouped[a.scheme_id].push(a);
+  });
+
+  // Find related BCs (share at least one value)
+  const myValues = new Set(asgns.map(a => a.value_id));
+  const relatedIds = new Set();
+  store.assignments.forEach(a => {
+    if (a.bc_id !== bcId && myValues.has(a.value_id)) relatedIds.add(a.bc_id);
+  });
+
+  content.innerHTML = `
+    <div class="detail-id">${bc.ncit_code}</div>
+    <div class="detail-name">${bc.short_name}</div>
+    <div class="detail-rule"></div>
+    ${store.schemes.map(scheme => {
+      const vals = grouped[scheme.scheme_id] || [];
+      if (vals.length === 0) return '';
+      return `
+        <div class="detail-section">
+          <div class="detail-section-title">${scheme.name}</div>
+          ${vals.map(a => {
+            const v = valueById(a.value_id);
+            return v ? `<div class="detail-value">
+              <div class="detail-value-label">${v.label}</div>
+              <div class="detail-value-desc">${v.description}</div>
+            </div>` : '';
+          }).join('')}
+        </div>`;
+    }).join('')}
+    <div class="detail-section">
+      <div class="detail-section-title">Related BCs (${relatedIds.size})</div>
+      <div>${[...relatedIds].map(rid => {
+        const r = bcById(rid);
+        return r ? `<span class="related-bc" data-bc="${rid}">${r.short_name}</span>` : '';
+      }).join('')}</div>
+    </div>`;
+
+  panel.classList.add('open');
+
+  content.querySelectorAll('.related-bc').forEach(el => {
+    el.addEventListener('click', () => openDetail(el.dataset.bc));
+  });
+
+  // Update card / chip selection
+  document.querySelectorAll('.bc-card, .bc-chip').forEach(c => c.classList.toggle('selected', c.dataset.bc === bcId));
+}
+
+function closeDetail() {
+  selectedBcId = null;
+  document.getElementById('detailPanel').classList.remove('open');
+  document.querySelectorAll('.bc-card.selected, .bc-chip.selected').forEach(c => c.classList.remove('selected'));
+}
+
+// ─── View switching ───
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  document.getElementById('explorerView').classList.toggle('hidden', view !== 'explorer');
+  document.getElementById('matrixView').classList.toggle('hidden', view !== 'matrix');
+  document.getElementById('sidebar').style.display = '';
+}
+
+// ─── Master render ───
+function renderAll() {
+  const count = getFilteredBcs().length;
+  document.getElementById('searchCount').textContent = `${count} of ${store.bcs.length} BCs`;
+  renderFacets();
+  if (currentView === 'explorer') renderExplorer();
+  else if (currentView === 'matrix') renderMatrix();
+}
+
+// ─── XLSX import ───
+function loadXlsx(data) {
+  const wb = XLSX.read(data, { type: 'array' });
+
+  const readSheet = (name) => {
+    const ws = wb.Sheets[name];
+    if (!ws) return [];
+    return XLSX.utils.sheet_to_json(ws, { defval: '' });
+  };
+
+  store.bcs = readSheet('BIOMEDICAL_CONCEPT');
+  store.schemes = readSheet('BC_CLASSIFICATION_SCHEME');
+  store.values = readSheet('BC_CLASSIFICATION_VALUE');
+  store.assignments = readSheet('BC_CLASSIFICATION_ASSIGNMENT');
+
+  // Normalize field names (in case of casing differences)
+  store.bcs = store.bcs.map(r => ({ bc_id: String(r.bc_id || r.BC_ID || ''), short_name: String(r.short_name || r.SHORT_NAME || ''), ncit_code: String(r.ncit_code || r.NCIT_CODE || '') }));
+  store.schemes = store.schemes.map(r => ({ scheme_id: String(r.scheme_id||''), name: String(r.name||''), description: String(r.description||''), purpose: String(r.purpose||''), intended_use: String(r.intended_use||'') }));
+  store.values = store.values.map(r => ({ value_id: String(r.value_id||''), scheme_id: String(r.scheme_id||''), label: String(r.label||''), description: String(r.description||'') }));
+  store.assignments = store.assignments.map(r => ({ assignment_id: String(r.assignment_id||''), bc_id: String(r.bc_id||''), scheme_id: String(r.scheme_id||''), value_id: String(r.value_id||'') }));
+
+  activeFilters = {};
+  showZeros = false;
+  searchQuery = '';
+  searchAllProperties = false;
+  document.getElementById('globalSearch').value = '';
+  document.getElementById('searchScopeBtn').textContent = 'Names only';
+  document.getElementById('searchScopeBtn').classList.remove('on');
+  initApp();
+}
+
+function loadMockData() {
+  store = JSON.parse(JSON.stringify(MOCK_DATA));
+  activeFilters = {};
+  showZeros = false;
+  searchQuery = '';
+  searchAllProperties = false;
+  document.getElementById('globalSearch').value = '';
+  document.getElementById('searchScopeBtn').textContent = 'Names only';
+  document.getElementById('searchScopeBtn').classList.remove('on');
+  initApp();
+}
+
+function initApp() {
+  document.getElementById('emptyState').classList.add('hidden');
+  document.getElementById('explorerView').classList.remove('hidden');
+  document.getElementById('prototypeBanner').classList.add('hidden');
+  switchView('explorer');
+  renderAll();
+}
+
+// ─── Event wiring ───
+document.addEventListener('DOMContentLoaded', () => {
+  // View tabs
+  document.querySelectorAll('.view-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      if (store.bcs.length === 0) return;
+      switchView(tab.dataset.view);
+      renderAll();
+    });
+  });
+
+  // Search
+  document.getElementById('globalSearch').addEventListener('input', e => {
+    searchQuery = e.target.value.trim();
+    document.getElementById('searchClearBtn').classList.toggle('hidden', !searchQuery);
+    renderAll();
+  });
+
+  // Clear search ✕
+  document.getElementById('searchClearBtn').addEventListener('click', () => {
+    searchQuery = '';
+    document.getElementById('globalSearch').value = '';
+    document.getElementById('searchClearBtn').classList.add('hidden');
+    renderAll();
+  });
+
+  // Search scope toggle
+  document.getElementById('searchScopeBtn').addEventListener('click', () => {
+    searchAllProperties = !searchAllProperties;
+    const btn = document.getElementById('searchScopeBtn');
+    btn.textContent = searchAllProperties ? 'All fields' : 'Names only';
+    btn.classList.toggle('on', searchAllProperties);
+    if (searchQuery) renderAll();
+  });
+
+  // Clear all (filters + search)
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    activeFilters = {};
+    searchQuery = '';
+    document.getElementById('globalSearch').value = '';
+    document.getElementById('searchClearBtn').classList.add('hidden');
+    renderAll();
+  });
+
+  // Show / hide zero-count facet values
+  document.getElementById('showZerosBtn').addEventListener('click', () => {
+    showZeros = !showZeros;
+    renderFacets();
+  });
+
+  // Expand / collapse all facets
+  document.getElementById('expandAllBtn').addEventListener('click', () => {
+    const allCollapsed = store.schemes.every(s => collapsedSchemes.has(s.scheme_id));
+    if (allCollapsed) {
+      collapsedSchemes.clear();
+    } else {
+      store.schemes.forEach(s => collapsedSchemes.add(s.scheme_id));
+    }
+    renderFacets();
+  });
+
+  // Close detail
+  document.getElementById('detailClose').addEventListener('click', closeDetail);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+  // File import
+  const fileInput = document.getElementById('fileInput');
+  document.getElementById('importBtn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => loadXlsx(new Uint8Array(ev.target.result));
+    reader.readAsArrayBuffer(file);
+  });
+
+  // Drop zone
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = ev => loadXlsx(new Uint8Array(ev.target.result));
+      reader.readAsArrayBuffer(file);
+    }
+  });
+
+  // Load mock
+  document.getElementById('loadMock').addEventListener('click', loadMockData);
+});
+</script>
+</body>
+</html>

@@ -3,7 +3,9 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import DB_PATH
 
-engine = create_engine(f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False})
+engine = create_engine(
+    f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False}
+)
 
 
 @event.listens_for(engine, "connect")

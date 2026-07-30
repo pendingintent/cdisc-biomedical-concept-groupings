@@ -27,7 +27,11 @@ def test_get_assignment_not_found(client):
 def test_create_assignment_bad_bc_conflicts(client):
     resp = client.post(
         "/classification-assignments",
-        json={"bc_id": "does_not_exist", "scheme_id": KNOWN_SCHEME_ID, "value_id": KNOWN_VALUE_ID},
+        json={
+            "bc_id": "does_not_exist",
+            "scheme_id": KNOWN_SCHEME_ID,
+            "value_id": KNOWN_VALUE_ID,
+        },
     )
     assert resp.status_code == 409
 
@@ -35,7 +39,11 @@ def test_create_assignment_bad_bc_conflicts(client):
 def test_create_assignment_bad_value_scheme_pair_conflicts(client):
     resp = client.post(
         "/classification-assignments",
-        json={"bc_id": KNOWN_BC_ID, "scheme_id": "qrs_age_category", "value_id": KNOWN_VALUE_ID},
+        json={
+            "bc_id": KNOWN_BC_ID,
+            "scheme_id": "qrs_age_category",
+            "value_id": KNOWN_VALUE_ID,
+        },
     )
     assert resp.status_code == 409
 
@@ -43,7 +51,11 @@ def test_create_assignment_bad_value_scheme_pair_conflicts(client):
 def test_create_duplicate_assignment_conflicts(client):
     resp = client.post(
         "/classification-assignments",
-        json={"bc_id": KNOWN_BC_ID, "scheme_id": KNOWN_SCHEME_ID, "value_id": KNOWN_VALUE_ID},
+        json={
+            "bc_id": KNOWN_BC_ID,
+            "scheme_id": KNOWN_SCHEME_ID,
+            "value_id": KNOWN_VALUE_ID,
+        },
     )
     assert resp.status_code == 409
 
@@ -51,14 +63,22 @@ def test_create_duplicate_assignment_conflicts(client):
 def test_create_update_delete_assignment_round_trip(client):
     create_resp = client.post(
         "/classification-assignments",
-        json={"bc_id": "C127127", "scheme_id": "qrs_age_category", "value_id": "ac_adult"},
+        json={
+            "bc_id": "C127127",
+            "scheme_id": "qrs_age_category",
+            "value_id": "ac_adult",
+        },
     )
     assert create_resp.status_code == 201
     assignment_id = create_resp.json()["assignment_id"]
 
     update_resp = client.put(
         f"/classification-assignments/{assignment_id}",
-        json={"bc_id": "C127127", "scheme_id": "qrs_age_category", "value_id": "ac_child"},
+        json={
+            "bc_id": "C127127",
+            "scheme_id": "qrs_age_category",
+            "value_id": "ac_child",
+        },
     )
     assert update_resp.status_code == 200
     assert update_resp.json()["value_id"] == "ac_child"

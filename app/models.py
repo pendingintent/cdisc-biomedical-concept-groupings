@@ -28,7 +28,9 @@ class BCClassificationScheme(Base):
     purpose: Mapped[str]
     intended_use: Mapped[str]
 
-    values: Mapped[List["BCClassificationValue"]] = relationship(back_populates="scheme")
+    values: Mapped[List["BCClassificationValue"]] = relationship(
+        back_populates="scheme"
+    )
 
 
 class BCClassificationValue(Base):
@@ -39,12 +41,16 @@ class BCClassificationValue(Base):
     )
 
     value_id: Mapped[str] = mapped_column(primary_key=True)
-    scheme_id: Mapped[str] = mapped_column(ForeignKey("bc_classification_scheme.scheme_id"))
+    scheme_id: Mapped[str] = mapped_column(
+        ForeignKey("bc_classification_scheme.scheme_id")
+    )
     label: Mapped[str]
     description: Mapped[str]
 
     scheme: Mapped["BCClassificationScheme"] = relationship(back_populates="values")
-    assignments: Mapped[List["BCClassificationAssignment"]] = relationship(back_populates="value")
+    assignments: Mapped[List["BCClassificationAssignment"]] = relationship(
+        back_populates="value"
+    )
 
 
 class BCClassificationAssignment(Base):
@@ -62,5 +68,7 @@ class BCClassificationAssignment(Base):
     scheme_id: Mapped[str] = mapped_column()
     value_id: Mapped[str] = mapped_column()
 
-    biomedical_concept: Mapped["BiomedicalConcept"] = relationship(back_populates="assignments")
+    biomedical_concept: Mapped["BiomedicalConcept"] = relationship(
+        back_populates="assignments"
+    )
     value: Mapped["BCClassificationValue"] = relationship(back_populates="assignments")

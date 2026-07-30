@@ -35,25 +35,36 @@ def test_biomedical_concept_classifications(client):
     assert body["biomedical_concept"]["bc_id"] == KNOWN_BC_ID
     scheme_ids = {group["scheme"]["scheme_id"] for group in body["classifications"]}
     assert "collection_method" in scheme_ids
-    collection_method_group = next(g for g in body["classifications"] if g["scheme"]["scheme_id"] == "collection_method")
+    collection_method_group = next(
+        g
+        for g in body["classifications"]
+        if g["scheme"]["scheme_id"] == "collection_method"
+    )
     value_ids = {v["value_id"] for v in collection_method_group["values"]}
     assert {"cm_crf_local_lab", "cm_dta_central_lab"} <= value_ids
 
 
 def test_create_update_delete_biomedical_concept_round_trip(client):
     create_resp = client.post(
-        "/biomedical-concepts", json={"bc_id": "TEST_BC_001", "short_name": "Test Concept", "ncit_code": None}
+        "/biomedical-concepts",
+        json={"bc_id": "TEST_BC_001", "short_name": "Test Concept", "ncit_code": None},
     )
     assert create_resp.status_code == 201
-    assert create_resp.json() == {"bc_id": "TEST_BC_001", "short_name": "Test Concept", "ncit_code": None}
+    assert create_resp.json() == {
+        "bc_id": "TEST_BC_001",
+        "short_name": "Test Concept",
+        "ncit_code": None,
+    }
 
     dup_resp = client.post(
-        "/biomedical-concepts", json={"bc_id": "TEST_BC_001", "short_name": "Duplicate", "ncit_code": None}
+        "/biomedical-concepts",
+        json={"bc_id": "TEST_BC_001", "short_name": "Duplicate", "ncit_code": None},
     )
     assert dup_resp.status_code == 409
 
     update_resp = client.put(
-        "/biomedical-concepts/TEST_BC_001", json={"short_name": "Updated Concept", "ncit_code": "C999999"}
+        "/biomedical-concepts/TEST_BC_001",
+        json={"short_name": "Updated Concept", "ncit_code": "C999999"},
     )
     assert update_resp.status_code == 200
     assert update_resp.json()["short_name"] == "Updated Concept"

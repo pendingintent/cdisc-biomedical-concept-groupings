@@ -17,7 +17,9 @@ def client(tmp_path):
     db_path = tmp_path / "bc_grouping_test.db"
     shutil.copy(ORIGINAL_DB, db_path)
 
-    engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
 
     @event.listens_for(engine, "connect")
     def _enable_foreign_keys(dbapi_connection, connection_record):
